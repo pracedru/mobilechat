@@ -27,17 +27,9 @@ module.exports = function(app, passport) {
     if (body.password && body.email){
       Users.findByEmail(body.email, function(error, user){
         if (error)
-          throw error;        
+          throw error;
         if (user.authenticate(body.password)){
-          user = user.clone();
-          for (var i = 0; i < user.myChannels.length; i++) {
-            var id = user.myChannels[i];
-            user.myChannels[i] = gf.getChannelData(user.myChannels[i]);
-          }
-          for (var i = 0; i < user.otherChannels.length; i++) {
-            var id = user.otherChannels[i];
-            user.otherChannels[i] = gf.getChannelData(user.otherChannels[i]);
-          }
+          user = gf.cloneUser(user,true);
           res.writeHead(200, { 'Content-Type': 'text/html' });
           res.end(JSON.stringify(user));
         }

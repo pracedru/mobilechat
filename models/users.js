@@ -1,7 +1,6 @@
 var fs = require('fs');
 var Guid = require('../guid');
 var bcrypt = require('bcrypt');
-var gf = require("../generalFunctions.js")
 
 usersById = null
 usersByEmail = null
@@ -35,20 +34,6 @@ User = function(name, email, password){
       "name": this.name,
       "myChannels": this.myChannels
     }
-  }
-  this.clone = function(deep){
-    user = JSON.parse(JSON.stringify(this));
-    if (deep){
-      for (var i = 0; i < user.myChannels.length; i++) {
-        var id = user.myChannels[i];
-        user.myChannels[i] = gf.getChannelData(user.myChannels[i]);
-      }
-      for (var i = 0; i < user.otherChannels.length; i++) {
-        var id = user.otherChannels[i];
-        user.otherChannels[i] = gf.getChannelData(user.otherChannels[i]);
-      }
-    }
-    return user;
   }
   this.deserialize = function(data){
      userData = JSON.parse(data);

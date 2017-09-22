@@ -77,7 +77,6 @@ module.exports = {
     var folder = "./data/channels/" + channelID + "/messages";
     var messages = [];
     var files = fs.readdirSync(folder);
-    var users = {};
     for (var i = 0; i < files.length; i++) {
       var file = files[i];
       var timestamp = parseInt(file.split(".")[0]);
@@ -121,5 +120,19 @@ module.exports = {
         return console.log(err);
       }
     });
+  },
+  cloneUser: function(user, deep){
+    user = JSON.parse(JSON.stringify(user));
+    if (deep){
+      for (var i = 0; i < user.myChannels.length; i++) {
+        var id = user.myChannels[i];
+        user.myChannels[i] = this.getChannelData(user.myChannels[i]);
+      }
+      for (var i = 0; i < user.otherChannels.length; i++) {
+        var id = user.otherChannels[i];
+        user.otherChannels[i] = this.getChannelData(user.otherChannels[i]);
+      }
+    }
+    return user;
   }
 }
