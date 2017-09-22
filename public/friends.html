@@ -1,0 +1,16 @@
+
+<div ui-content-for="title">
+  <span>Friends</span>
+</div>
+<div ui-content-for="navbarAction">
+  <span>{{channel.name}}</span>
+</div>
+<div class="scrollable">
+  <div class="scrollable-content">
+    <div class="list-group" ui-turn-off="uiSidebarLeft" >
+      <div id="msg{{message.timeStamp}}" class="list-group-item" ng-repeat="friend in user.friends">
+        <div class="md-caption">{{friend.name}}</dic><br/><div class="md-body-2">{{friend.text}}</div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,19 @@
+
+<div ui-content-for="title">
+  <span>{{user.name}}</span>
+</div>
+<div class="scrollable" ng-controller="UserController as $usrctrl">
+  <div class="scrollable-content section">
+    <table width=100%>
+      <tr>
+        <td><label>Remember Me</label></td>
+        <td><ui-switch ng-model="rememberMe"/></td>
+      </tr>
+      <tr>
+        <td>
+          <div class="btn btn-default btn-primary" ng-click="logout()">Logout</div>
+        </td>
+      </tr>
+    </table>
+  </div>
+</div>

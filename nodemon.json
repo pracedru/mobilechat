@@ -1,0 +1,8 @@
+{
+    "verbose"    : true,
+    "legacyWatch": false,
+    "ignore"     : [
+      "data/*",
+      "public/*"
+    ]
+}

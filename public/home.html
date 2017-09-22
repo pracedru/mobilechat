@@ -1,0 +1,17 @@
+
+<div class="scrollable">
+  <div class="scrollable-content">
+    <div class="list-group text-center">
+      <div class="list-group-item list-group-item-home">
+        <h3>My Channels</h3>
+        <div class="list-group">
+          <a class="list-group-item" ng-click="goChannel($event, channel)" ng-repeat="channel in user.myChannels">{{channel.name}} <i class="fa fa-chevron-right pull-right"></i></a>
+        </div>
+        <h3>Others channels</h3>
+        <div class="list-group">
+          <a class="list-group-item" ng-click="goChannel($event, channel)" ng-repeat="channel in user.otherChannels">{{channel.name}} <i class="fa fa-chevron-right pull-right"></i></a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
