@@ -11,17 +11,18 @@
   "license": "ISC",
   "dependencies": {
     "bcrypt": "^1.0.3",
-    "bcryptjs": "^2.4.3",
+    "bcryptjs": "*",
     "body-parser": "*",
-    "connect-flash": "^0.1.1",
-    "cookie-parser": "^1.4.3",
-    "express": "^4.15.4",
-    "express-validation": "^1.0.2",
-    "guid": "0.0.12",
+    "connect-flash": "*",
+    "cookie-parser": "*",
+    "express": "*",
+    "express-validation": "*",
+    "guid": "*",
     "jsonwebtoken": "*",
-    "passport": "^0.4.0",
-    "passport-http": "^0.3.0",
+    "passport": "*",
+    "passport-http": "*",
     "passport-jwt": "*",
-    "passport-local": "^1.0.0"
+    "passport-local": "*",
+    "ws": "^3.2.0"
   }
 }

@@ -28,8 +28,10 @@ module.exports = function(app, passport) {
       Users.findByEmail(body.email, function(error, user){
         if (error)
           throw error;
-        if (user.authenticate(body.password)){
+        var ticket = user.authenticate(body.password);
+        if (ticket != null){
           user = gf.cloneUser(user,true);
+          user.ticket = ticket;
           res.writeHead(200, { 'Content-Type': 'text/html' });
           res.end(JSON.stringify(user));
         }

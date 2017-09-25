@@ -2,7 +2,7 @@
 
 'use strict';
 var currentChannelID = "";
-
+var ws = null;
 var user = null;
 try{
   user = JSON.parse(localStorage.getItem('user'));
@@ -11,13 +11,12 @@ try{
 }
 //console.log("user id: " + userID);
 
-//userID = "1d5397eb-3dee-948b-a3e4-a4c46349173b";
-
 var app = angular.module('mobileChat', [
   'ngRoute',
   'mobile-angular-ui',
   'mobile-angular-ui.gestures',
-  'ngAnimate'
+  'ngAnimate',
+  'ngWebSocket'
 ]);
 
 app.run(function($transform) {
@@ -85,18 +84,25 @@ app.controller('MainController', ['$location', '$http', '$scope', '$interval', f
       if (!($event.keyCode == 13)) return;
     }
     var sc = this;
+
     if (this.newmessage != "") {
-      $http({
+      var msgData = {
+        "userid": user.id,
+        "message": this.newmessage,
+        "channelid": currentChannelID,
+        "type": "addMessage"
+      };
+      /*$http({
         url: "sendMessage",
         method: "GET",
-        params: {
-          "userid": user.id,
-          "message": this.newmessage,
-          "channelid": currentChannelID
-        }
+        params: msgData
       }).then(function success(response) {
         sc.newmessage = "";
-      });
+      });*/
+      if(ws){
+        ws.send(JSON.stringify(msgData));
+        sc.newmessage = "";
+      }
     }
   }
   $scope.createChannel = function() {
@@ -110,7 +116,7 @@ app.controller('MainController', ['$location', '$http', '$scope', '$interval', f
           "public": this.publicChannel
         }
       }).then(function success(response) {
-        console.log(response);
+        //console.log(response);
         $scope.user.myChannels.push(response.data)
         localStorage.setItem('user', JSON.stringify(user));
         $location.path("");

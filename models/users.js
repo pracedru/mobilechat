@@ -2,10 +2,16 @@ var fs = require('fs');
 var Guid = require('../guid');
 var bcrypt = require('bcrypt');
 
+Channels = null;
 usersById = null
 usersByEmail = null
 
-User = function(name, email, password){
+var Ticket = function(){
+  this.timestamp = Date.now;
+  this.id = Guid.new();
+}
+
+var User = function(name, email, password){
   this.name = name;
   if (email) this.email = email.toLowerCase();
   if (password){
@@ -15,13 +21,15 @@ User = function(name, email, password){
   this.myChannels = [];
   this.otherChannels = [];
   this.friends = [];
+  this.tickets = {};
+  this.webSockets = [];
   this.save = function() {
     var dir = "./data/users/" + this.id;
     if (!fs.existsSync(dir)) {
       fs.mkdirSync(dir);
     }
     var filename = dir + "/config.json";
-    fs.writeFile(filename, JSON.stringify(this), function(err) {
+    fs.writeFile(filename, JSON.stringify(this.serialize()), function(err) {
       if (err) {
         return console.log(err);
       }
@@ -44,12 +52,66 @@ User = function(name, email, password){
      this.myChannels = userData.myChannels;
      this.otherChannels = userData.otherChannels;
      this.friends = userData.friends;
+     this.tickets = userData.tickets;
   }
-  this.authenticate = function (pw){
+  this.serialize = () =>{
+    userData = {};
+    userData.name = this.name;
+    userData.email = this.email;
+    userData.password = this.password;
+    userData.id = this.id;
+    userData.myChannels = this.myChannels;
+    userData.otherChannels = this.otherChannels;
+    userData.friends = this.friends;
+    userData.tickets = this.tickets;
+    return userData;
+  }
+  this.authenticate = (pw) => {
     if (bcrypt.compareSync(pw, this.password)){
+      var ticket = new Ticket();
+      this.tickets[ticket.id] = ticket;
+      this.save();
+      return ticket;
+    }
+    return null;
+  }
+  this.checkTicket = (ticketid) => {
+    if (ticketid in this.tickets){
+      ticket = this.tickets[ticketid];
+      // Todo: Check timestamp age
       return true;
     }
     return false;
+  }
+  this.addWebSocket = (webSocket) => {
+    var usr = this;
+    this.webSockets.push(webSocket);
+    webSocket.on("message", this.onMessage);
+    webSocket.on("close", function() {
+      var index = usr.webSockets.indexOf(this);
+      usr.webSockets.splice(index, 1);
+    })
+  }
+  this.onMessage = (data) => {
+    var currentUser = this;
+    var dataObject = JSON.parse(data);
+    switch (dataObject.type) {
+      case "addMessage":
+        var channelID = dataObject.channelid;
+        Channels.findById(channelID, (err, channel) => {
+          if (err)
+            throw err;
+          channel.addMessage(dataObject, currentUser);
+        });
+        break;
+      default:
+        console.log("wierd message recieved!");
+    }
+  }
+  this.relayMessage = (messageData) => {
+    this.webSockets.forEach((ws => {
+      ws.send(JSON.stringify(messageData));
+    }));
   }
 }
 
@@ -79,6 +141,9 @@ function readAllUsers() {
 readAllUsers();
 
 module.exports = {
+  setChannels: (channels) => {
+    Channels = channels;
+  },
   findByEmail: function(email, done) {
     var user = null;
     var error = null;

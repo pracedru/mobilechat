@@ -10,7 +10,7 @@ module.exports = {
       if (err)
         done(err, null);
       var channelData = {
-        "users": [],
+        "users": [userID],
         "owner": userID,
         "name": newChannelName,
         "id": newChannelID,
@@ -82,11 +82,13 @@ module.exports = {
       var timestamp = parseInt(file.split(".")[0]);
       if (timestamp > limitTimeStamp) {
         var message = this.getMessage(channelID, timestamp);
-        Users.findById(message.sender, function(err, user){
-          if (!err)
-            message.name = user.name;
-        });
-        messages.push(message);
+        if (message!=null){
+          Users.findById(message.sender, function(err, user){
+            if (!err)
+              message.name = user.name;
+          });
+          messages.push(message);
+        }
       }
     }
     messagesData = {
@@ -104,8 +106,12 @@ module.exports = {
     } catch (err) {
       return null;
     }
-    message = JSON.parse(data);
-    message.timeStamp = timestamp;
+    try {
+      message = JSON.parse(data);
+      message.timeStamp = timestamp;
+    } catch (e){
+      console.log("message undreadable");
+    }
     return message;
   },
   addMessage: function(userID, channelID, message) {
@@ -122,7 +128,7 @@ module.exports = {
     });
   },
   cloneUser: function(user, deep){
-    user = JSON.parse(JSON.stringify(user));
+    user = JSON.parse(JSON.stringify(user.serialize()));
     if (deep){
       for (var i = 0; i < user.myChannels.length; i++) {
         var id = user.myChannels[i];
