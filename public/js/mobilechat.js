@@ -60,6 +60,11 @@ app.config(function($routeProvider) {
     templateUrl: 'friends.html',
     reloadOnSearch: false
   });
+  $routeProvider.when('/usersearch', {
+    templateUrl: 'usersearch.html',
+    reloadOnSearch: false
+  });
+
 });
 
 app.controller('MainController', ['$location', '$http', '$scope', '$interval', function($location, $http, $scope, $interval) {

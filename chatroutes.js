@@ -4,6 +4,9 @@ var Users = require("./models/users.js");
 var gf = require("./generalFunctions.js")
 
 module.exports = function(app, passport) {
+  app.get("/userSearch", function(req, res) {
+    var userID = req.query.userid;
+  });
   app.get("/sendMessage", function(req, res) {
     var userID = req.query.userid;
     var channelID = req.query.channelid;

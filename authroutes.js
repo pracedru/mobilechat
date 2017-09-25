@@ -25,7 +25,7 @@ module.exports = function(app, passport) {
   app.post("/login", function(req, res) {
     var body = req.body;
     if (body.password && body.email){
-      Users.findByEmail(body.email, function(error, user){
+      Users.findByEmail(body.email.toLowerCase(), function(error, user){
         if (error)
           throw error;
         var ticket = user.authenticate(body.password);
