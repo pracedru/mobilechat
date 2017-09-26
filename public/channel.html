@@ -9,11 +9,17 @@
     <div class="scrollable-content">
       <div class="list-group" ui-turn-off="uiSidebarLeft" >
         <div id="msg{{message.timeStamp}}" class="list-group-item" ng-repeat="message in channelMessages">
-          <div class="md-caption">{{message.name}}</dic><br/><div class="md-body-2">{{message.text}}</div>
-        </div>
+          <small>
+            <span class="label label-default" >{{message.name}}</span>
+          </small>
 
+          <div class="md-body-2">{{message.text}}</div>
+        </div>
       </div>
+
     </div>
   </div>
-
+  <div ui-content-for="modals">
+    <div ng-include="'addfriend.html'"></div>
+  </div>
 </div>

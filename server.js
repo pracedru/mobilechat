@@ -1,8 +1,7 @@
 #!/usr/bin/env node
 
 var express = require('express');
-var passport = require("passport");
-var flash = require("connect-flash");
+var cookieParser = require('cookie-parser')
 var bodyParser = require('body-parser');
 var chatHandler = require('./mobilechathandler.js');
 var app = express();
@@ -19,16 +18,13 @@ users.setChannels(channels);
 app.use(require('cookie-parser')());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
+app.use(cookieParser());
 
-require("./config/passport.js")(passport);
-
-app.use(passport.initialize());
-app.use(passport.session());
-app.use(flash());
 app.use(express.static('./public'));
+require("./authroutes.js") (app);
+require("./bouncer.js") (app, users);
+require("./chatroutes.js") (app);
 
-require("./chatroutes.js") (app, passport, wss);
-require("./authroutes.js") (app, passport, wss);
 //app.get('/chat', function(req, res) {
 //    chatHandler.handleChat(req, res);
 //});

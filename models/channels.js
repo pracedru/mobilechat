@@ -33,11 +33,53 @@ var Channel = function(){
       fs.mkdirSync(dir);
     }
     var filename = dir + "/config.json";
-    fs.writeFile(filename, JSON.stringify(this.serialize), function(err) {
+    fs.writeFile(filename, JSON.stringify(this.serialize()), function(err) {
       if (err) {
         return console.log(err);
       }
     });
+  }
+  this.getMessages = (userID, maxCount, limitTimeStamp) => {
+    var folder = "./data/channels/" + this.id + "/messages";
+    var messages = [];
+    var files = fs.readdirSync(folder);
+    for (var i = 0; i < files.length; i++) {
+      var file = files[i];
+      var timestamp = parseInt(file.split(".")[0]);
+      if (timestamp > limitTimeStamp) {
+        var message = this.getMessage(timestamp);
+        if (message!=null){
+          Users.findById(message.sender, function(err, user){
+            if (!err)
+              message.name = user.name;
+          });
+          messages.push(message);
+        }
+      }
+    }
+    messagesData = {
+      "timeStamp": Date.now(),
+      "channelMessages": messages
+    };
+    return messagesData;
+  }
+
+  this.getMessage = function(timestamp) {
+    var filename = "./data/channels/" + this.id + "/messages/" + timestamp + ".json";
+    var message = null;
+    var data = null;
+    try {
+      data = fs.readFileSync(filename);
+    } catch (err) {
+      return null;
+    }
+    try {
+      message = JSON.parse(data);
+      message.timeStamp = timestamp;
+    } catch (e){
+      console.log("message undreadable");
+    }
+    return message;
   }
   this.addMessage = (messageData, fromUser) => {
     if (this.users.indexOf(messageData.userid) != -1 || this.public == true){

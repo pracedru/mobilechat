@@ -12,17 +12,12 @@
   "dependencies": {
     "bcrypt": "^1.0.3",
     "bcryptjs": "*",
-    "body-parser": "*",
-    "connect-flash": "*",
+    "body-parser": "*",    
     "cookie-parser": "*",
     "express": "*",
     "express-validation": "*",
     "guid": "*",
     "jsonwebtoken": "*",
-    "passport": "*",
-    "passport-http": "*",
-    "passport-jwt": "*",
-    "passport-local": "*",
     "ws": "^3.2.0"
   }
 }

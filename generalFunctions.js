@@ -73,47 +73,7 @@ module.exports = {
     return channelData;
   },
 
-  getChannelMessages: function(userID, channelID, maxCount, limitTimeStamp) {
-    var folder = "./data/channels/" + channelID + "/messages";
-    var messages = [];
-    var files = fs.readdirSync(folder);
-    for (var i = 0; i < files.length; i++) {
-      var file = files[i];
-      var timestamp = parseInt(file.split(".")[0]);
-      if (timestamp > limitTimeStamp) {
-        var message = this.getMessage(channelID, timestamp);
-        if (message!=null){
-          Users.findById(message.sender, function(err, user){
-            if (!err)
-              message.name = user.name;
-          });
-          messages.push(message);
-        }
-      }
-    }
-    messagesData = {
-      "timeStamp": Date.now(),
-      "channelMessages": messages
-    };
-    return messagesData;
-  },
-  getMessage: function(channelID, timestamp) {
-    var filename = "./data/channels/" + channelID + "/messages/" + timestamp + ".json";
-    var message = null;
-    var data = null;
-    try {
-      data = fs.readFileSync(filename);
-    } catch (err) {
-      return null;
-    }
-    try {
-      message = JSON.parse(data);
-      message.timeStamp = timestamp;
-    } catch (e){
-      console.log("message undreadable");
-    }
-    return message;
-  },
+
   addMessage: function(userID, channelID, message) {
     var timestamp = Date.now();
     var filename = "./data/channels/" + channelID + "/messages/" + timestamp + ".json";
@@ -130,6 +90,8 @@ module.exports = {
   cloneUser: function(user, deep){
     user = JSON.parse(JSON.stringify(user.serialize()));
     if (deep){
+      user.tickets = null;
+      user.password = null;
       for (var i = 0; i < user.myChannels.length; i++) {
         var id = user.myChannels[i];
         user.myChannels[i] = this.getChannelData(user.myChannels[i]);
@@ -137,6 +99,15 @@ module.exports = {
       for (var i = 0; i < user.otherChannels.length; i++) {
         var id = user.otherChannels[i];
         user.otherChannels[i] = this.getChannelData(user.otherChannels[i]);
+      }
+      for (var i = 0; i < user.friends.length; i++){
+        friendid = user.friends[i];
+        var friend = Users.findByIdSync(friendid);
+        if (friend) {
+          user.friends[i] = friend.publicData();
+        } else {
+
+        }
       }
     }
     return user;

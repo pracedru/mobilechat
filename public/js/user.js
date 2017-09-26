@@ -1,8 +1,9 @@
-app.controller('UserController', ['$location', '$http', '$scope', '$interval', function($location, $http, $scope, $interval) {
+app.controller('UserController', ['$location', '$http', '$scope', '$cookies', function($location, $http, $scope, $cookies) {
   $scope.name = "";
   $scope.email = "";
   $scope.password = "";
   $scope.rememberMe = true;
+  $scope.error = "";
   $scope.signup = function (){
     console.log("before signup");
     $http({
@@ -18,10 +19,13 @@ app.controller('UserController', ['$location', '$http', '$scope', '$interval', f
       console.log(response);
       user = response.data;
       localStorage.setItem('user', JSON.stringify(user));
+      $cookies.put("id", user.id);
+      $cookies.put("ticket", user.ticket.id);
       $location.path("");
     }, function error(response) {
       console.log("Error");
       console.log(response);
+      $scope.error = response.data;
     });
   }
 
@@ -39,10 +43,13 @@ app.controller('UserController', ['$location', '$http', '$scope', '$interval', f
       //console.log(response);
       user = response.data;
       localStorage.setItem('user', JSON.stringify(user));
+      $cookies.put("id", user.id);
+      $cookies.put("ticket", user.ticket.id);
       $location.path("");
     }, function error(response) {
       console.log("Error");
       console.log(response);
+      $scope.error = response.data;
     });
   }
   $scope.logout = function(){

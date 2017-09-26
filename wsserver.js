@@ -9,7 +9,7 @@ exports.webSocketServer = function(server) {
     wss = new WebSocketServer({
       server: server
     });
-    wss.on("connection", function(webSocket) {      
+    wss.on("connection", function(webSocket) {
       webSocket.on("message", onMessage);
     });
   }
@@ -22,10 +22,15 @@ function onMessage(data) {
     user = Users.findById(dataObject.user.id, (err, user) => {
       if (err)
         throw err;
-      if (user.checkTicket(dataObject.user.ticket.id)){
-        user.addWebSocket(this);
-      } else {
-        console.log("Ticket rejected: " + dataObject.user.ticket.id);
+      try {
+        if (user.checkTicket(dataObject.user.ticket.id)){
+          user.addWebSocket(this);
+        } else {
+          console.log("Ticket rejected: " + dataObject.user.ticket.id);
+        }
+      } catch (e){
+        console.log("Id or ticket missing");
+        this.close();
       }
     });
   }

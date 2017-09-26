@@ -37,10 +37,11 @@ var User = function(name, email, password){
     usersByEmail[this.email] = this;
     usersById[this.id] = this;
   }
-  this.public = function(){
+  this.publicData = function(){
     return {
       "name": this.name,
-      "myChannels": this.myChannels
+      "myChannels": this.myChannels,
+      "id": this.id
     }
   }
   this.deserialize = function(data){
@@ -105,7 +106,7 @@ var User = function(name, email, password){
         });
         break;
       default:
-        console.log("wierd message recieved!");
+        console.log("wierd message recieved! " + data);
     }
   }
   this.relayMessage = (messageData) => {
@@ -165,6 +166,33 @@ module.exports = {
       error = "user not found";
     }
     done(error, user)
+  },
+  findByIdSync: function(id) {
+    user = null;
+    if (id in usersById) {
+      user = usersById[id];
+    }
+    if (user == null){
+      throw "User not found.";
+    }
+    return user;
+  },
+  searchByText: (searchText)=>{
+    searchText = searchText.toLowerCase();
+    searchList = searchText.split(' ');
+    result = [];
+    for (var id in usersById){
+      var user = usersById[id];
+      var name = user.name.toLowerCase();
+      for (txtIndex in searchList){
+        txt = searchList[txtIndex];
+        if (name.indexOf(txt) != -1){
+          result.push({name: user.name, online: true, id: user.id});
+          break;
+        }
+      }
+    }
+    return result;
   },
   User: User
 }

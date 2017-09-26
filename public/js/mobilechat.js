@@ -4,9 +4,9 @@
 var currentChannelID = "";
 var ws = null;
 var user = null;
-try{
+try {
   user = JSON.parse(localStorage.getItem('user'));
-} catch (e){
+} catch (e) {
   console.log(e);
 }
 //console.log("user id: " + userID);
@@ -16,7 +16,8 @@ var app = angular.module('mobileChat', [
   'mobile-angular-ui',
   'mobile-angular-ui.gestures',
   'ngAnimate',
-  'ngWebSocket'
+  'ngWebSocket',
+  'ngCookies'
 ]);
 
 app.run(function($transform) {
@@ -67,7 +68,7 @@ app.config(function($routeProvider) {
 
 });
 
-app.controller('MainController', ['$location', '$http', '$scope', '$interval', function($location, $http, $scope, $interval) {
+app.controller('MainController', ['$location', '$http', '$scope', '$cookies', function($location, $http, $scope, $cookies) {
   $scope.userShown = true;
   $scope.loginShown = true;
   $scope.signupShown = true;
@@ -78,12 +79,59 @@ app.controller('MainController', ['$location', '$http', '$scope', '$interval', f
   $scope.createChannelEnabled = true;
   $scope.searchEnabled = false;
   $scope.optionsEnabled = false;
+  $scope.invitefriendEnabled = false;
+  $scope.usersearchtext = "";
+  $scope.userSearchList = [];
+
+  $scope.userSearch = ($event) => {
+    if ($event instanceof KeyboardEvent) {
+      if (!($event.keyCode == 13)) return;
+    }
+    var usersearchtext = this.usersearchtext;
+    $http({
+      url: "userSearch",
+      method: "GET",
+      params: {
+        "searchText": usersearchtext
+      }
+    }).then(function success(response) {
+      $scope.userSearchList = response.data.result;
+    });
+  };
 
   $scope.goChannel = function($event, channel) {
     currentChannelID = channel.id;
     $location.path("channel");
   };
-
+  $scope.addFriend = (user) => {
+    $http({
+      url: "addFriend",
+      method: "GET",
+      params: {
+        "id": user.id
+      }
+    }).then(function success(response) {
+      console.log(response.data);
+      $scope.updateUserData();
+    }, (response)=> {
+      console.log(response.data);
+    });
+  };
+  $scope.addFriendToChannel = (user) => {
+    $http({
+      url: "addFriendToChannel",
+      method: "GET",
+      params: {
+        "friendid": user.id,
+        "channelid": currentChannelID
+      }
+    }).then(function success(response) {
+      console.log(response.data);
+      $scope.updateUserData();
+    }, (response)=> {
+      console.log(response.data);
+    });
+  };
   $scope.sendMessage = function($event) {
     if ($event instanceof KeyboardEvent) {
       if (!($event.keyCode == 13)) return;
@@ -97,14 +145,7 @@ app.controller('MainController', ['$location', '$http', '$scope', '$interval', f
         "channelid": currentChannelID,
         "type": "addMessage"
       };
-      /*$http({
-        url: "sendMessage",
-        method: "GET",
-        params: msgData
-      }).then(function success(response) {
-        sc.newmessage = "";
-      });*/
-      if(ws){
+      if (ws) {
         ws.send(JSON.stringify(msgData));
         sc.newmessage = "";
       }
@@ -136,17 +177,29 @@ app.controller('MainController', ['$location', '$http', '$scope', '$interval', f
         "userid": user.id
       }
     }).then(function success(response) {
+      //console.log(response.data);
+      var ticket = $scope.user.ticket;
       $scope.user = response.data;
+      user = $scope.user;
+      user.ticket = ticket;
     });
   }
+  $scope.updateUserData();
 
-  if (user==null){
+  if (user == null) {
     $location.path("login");
     $scope.userShown = false;
   } else {
+    document.cookie = "username=John Doe";
     $scope.user = user;
     $scope.loginShown = false;
     $scope.signupShown = false;
+    try {
+      $cookies.put("id", user.id);
+      $cookies.put("ticket", user.ticket.id);
+    } catch (e) {
+
+    }
   }
 
   $scope.$on("$routeChangeStart", function(event, next, current) {
@@ -155,9 +208,10 @@ app.controller('MainController', ['$location', '$http', '$scope', '$interval', f
       $scope.optionsEnabled = false;
       $scope.searchEnabled = false;
       $scope.inputEnabled = false;
+      $scope.invitefriendEnabled = false;
       var body = document.getElementsByTagName('body')[0];
       body.classList.remove("has-extended-navbar-bottom");
-      if (user==null){
+      if (user == null) {
         if (next.originalPath != "/signup") {
           $location.path("login");
         }
@@ -173,10 +227,12 @@ app.controller('MainController', ['$location', '$http', '$scope', '$interval', f
       if (next.originalPath == "/channel") {
         $scope.optionsEnabled = true;
         $scope.inputEnabled = true;
+        $scope.invitefriendEnabled = true;
         body.classList.add("has-extended-navbar-bottom");
-      } else if(next.originalPath == "/") {
+      } else if (next.originalPath == "/" || next.originalPath == "/home") {
         $scope.createChannelEnabled = true;
-      } else if(next.originalPath == "/friends") {
+        $scope.updateUserData();
+      } else if (next.originalPath == "/friends") {
         $scope.searchEnabled = true;
       } else {
         $scope.inputEnabled = false;

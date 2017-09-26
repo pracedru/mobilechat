@@ -13,6 +13,7 @@
     <link rel="stylesheet" href="/node_modules/mobile-angular-ui/dist/css/mobile-angular-ui-base.css" />
     <link rel="stylesheet" href="/node_modules/mobile-angular-ui/dist/css/mobile-angular-ui-desktop.min.css" />
     <script src="/node_modules/angular/angular.min.js"></script>
+    <script src="/node_modules/angular-cookies/angular-cookies.js"></script>
     <script src="/node_modules/angular-animate/angular-animate.min.js"></script>
     <script src="/node_modules/angular-route/angular-route.min.js"></script>
     <script src="/node_modules/angular-websocket/dist/angular-websocket.js"></script>
@@ -62,6 +63,7 @@
           <a href="#!/options" ng-if="optionsEnabled" class="btn btn-navbar"><i class="fa fa-gear fa-navbar"></i> Options</a>
           <a href="" ui-turn-on="usersearch" ng-if="searchEnabled" class="btn btn-navbar"><i class="fa fa-search fa-navbar"></i> Search</a>
           <a href="#!/createchannel" ng-if="createChannelEnabled" class="btn btn-navbar"><i class="fa fa-plus fa-navbar"></i> Channel</a>
+          <a href="" ui-turn-on="addfriendform" ng-if="invitefriendEnabled" class="btn btn-navbar"><i class="fa fa-plus fa-navbar"></i> Friend</a>
         </div>
       </div>
 
@@ -75,6 +77,6 @@
     </div><!-- ~ .app -->
 
     <!-- Modals and Overlays -->
-    <div ui-yield-to="modals"></div>  
+    <div ui-yield-to="modals"></div>
   </body>
 </html>

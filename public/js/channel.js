@@ -1,7 +1,5 @@
 app.controller('ChannelController', ['$location', '$http', '$scope', '$websocket', function($location, $http, $scope, $websocket) {
-
   ws = $websocket("ws://" + location.host);
-
   ws.onError( (e) => {
     console.log("ws error");
   });
@@ -32,22 +30,7 @@ app.controller('ChannelController', ['$location', '$http', '$scope', '$websocket
 
   $scope.channelMessages = [];
   if (currentChannelID == "") return;
-  $scope.updateChannel = function() {
-    $http({
-      url: "channelMessages",
-      method: "GET",
-      params: {
-        "userid": user.id,
-        "channelid": currentChannelID,
-        "maxCount": 10,
-        "timeStamp": $scope.channel.timeStamp
-      }
-    }).then(function success(response) {
-      $scope.channelMessages.push.apply($scope.channelMessages, response.data.channelMessages);
-      $scope.channel.timeStamp = response.data.timeStamp;
-      if (response.data.channelMessages.length > 0) $scope.gotoBottom();
-    });
-  }
+
   $scope.gotoBottom = function() {
     if ($scope.channelMessages.length > 0){
       var timeStamp = $scope.channelMessages[$scope.channelMessages.length - 1].timeStamp;
@@ -63,6 +46,10 @@ app.controller('ChannelController', ['$location', '$http', '$scope', '$websocket
     }
   }).then(function success(response) {
     $scope.channel = response.data;
+  }, (response) => {
+    console.log(response.data);
+    console.log(response.statusText);
+    $location.path("login");
   });
   $http({
     url: "channelMessages",
@@ -78,6 +65,11 @@ app.controller('ChannelController', ['$location', '$http', '$scope', '$websocket
     $scope.channelMessages = response.data.channelMessages;
     $scope.channel.timeStamp = response.data.timeStamp;
     $scope.gotoBottom();
+  }, (response) => {
+    console.log(response.data);
+    console.log(response.statusText);
+    $location.path("login");
+
   });
   // Update messages
   //var promise = $interval($scope.updateChannel, 2000);
@@ -85,8 +77,10 @@ app.controller('ChannelController', ['$location', '$http', '$scope', '$websocket
   //  $interval.cancel(promise);
   //};
   $scope.$on("$destroy", function() {
-    var webSocket = ws;
-    ws = null;
-    webSocket.close();    
+    if (ws){
+      var webSocket = ws;
+      ws = null;
+      webSocket.close();
+    }
   });
 }]);
