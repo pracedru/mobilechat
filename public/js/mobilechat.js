@@ -182,25 +182,27 @@ app.controller('MainController', ['$location', '$http', '$scope', '$cookies', fu
       $scope.user = response.data;
       user = $scope.user;
       user.ticket = ticket;
+    }, (responce)=>{
+      $location.path("login");
     });
   }
-  $scope.updateUserData();
+
 
   if (user == null) {
     $location.path("login");
     $scope.userShown = false;
   } else {
-    document.cookie = "username=John Doe";
     $scope.user = user;
     $scope.loginShown = false;
     $scope.signupShown = false;
+    $scope.updateUserData();
     try {
       $cookies.put("id", user.id);
       $cookies.put("ticket", user.ticket.id);
     } catch (e) {
-
     }
   }
+
 
   $scope.$on("$routeChangeStart", function(event, next, current) {
     if (next) {

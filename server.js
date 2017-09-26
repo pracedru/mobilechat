@@ -28,3 +28,4 @@ require("./chatroutes.js") (app);
 //app.get('/chat', function(req, res) {
 //    chatHandler.handleChat(req, res);
 //});
+
