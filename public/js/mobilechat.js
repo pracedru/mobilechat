@@ -65,7 +65,10 @@ app.config(function($routeProvider) {
     templateUrl: 'usersearch.html',
     reloadOnSearch: false
   });
-
+  $routeProvider.when('/requests', {
+    templateUrl: 'requests.html',
+    reloadOnSearch: false
+  });
 });
 
 app.controller('MainController', ['$location', '$http', '$scope', '$cookies', function($location, $http, $scope, $cookies) {

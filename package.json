@@ -12,12 +12,14 @@
   "dependencies": {
     "bcrypt": "^1.0.3",
     "bcryptjs": "*",
-    "body-parser": "*",    
+    "body-parser": "*",
     "cookie-parser": "*",
     "express": "*",
     "express-validation": "*",
     "guid": "*",
     "jsonwebtoken": "*",
+    "mongodb": "^2.2.31",
+    "mongoose": "^4.11.13",
     "ws": "^3.2.0"
   }
 }

@@ -1,0 +1,20 @@
+<div class="modal" ui-if="acceptFriendForm" ui-shared-state="acceptFriendForm" >
+  <div class="modal-backdrop in"></div>
+  <div class="modal-dialog" >
+    <div class="modal-content" >
+      <div class="modal-header">
+        <button class="close"
+                ui-turn-off="acceptFriendForm">&times;</button>
+        <h4 class="modal-title">Accept request friend</h4>
+      </div>
+      <div class="modal-body">
+
+
+      </div>
+      <div class="modal-footer">
+        <button ui-turn-off="acceptFriendForm" class="btn btn-default">Close</button>
+        <button class="btn btn-primary" ng-click="userSearch()">Accept</button>
+      </div>
+    </div>
+  </div>
+</div>

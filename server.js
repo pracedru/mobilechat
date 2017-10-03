@@ -25,6 +25,7 @@ require("./authroutes.js") (app);
 require("./bouncer.js") (app, users);
 require("./chatroutes.js") (app);
 
+
 //app.get('/chat', function(req, res) {
 //    chatHandler.handleChat(req, res);
 //});

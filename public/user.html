@@ -4,16 +4,26 @@
 </div>
 <div class="scrollable" ng-controller="UserController as $usrctrl">
   <div class="scrollable-content section">
-    <table width=100%>
+    <table class="formtable">
       <tr>
-        <td><label>Remember Me</label></td>
-        <td><ui-switch ng-model="rememberMe"/></td>
+        <td><label>Name</label></td>
+        <td><input type="text" ng-model="user.name" class="form-control" placeholder="Enter your full name"></td>
       </tr>
       <tr>
-        <td>
-          <div class="btn btn-default btn-primary" ng-click="logout()">Logout</div>
-        </td>
+        <td><label>E-mail</label></td>
+        <td class="formcell"><input type="email" ng-model="user.email" class="form-control" placeholder="Enter your full name"></td>
+      </tr>
+      <tr>
+        <td><label>Alias</label></td>
+        <td><input type='text' ng-model="user.alias" class="form-control" placeholder="Your alias"></td>
+      </tr>
+      <tr>
+        <td><label>Use Alias</label></td>
+        <td><ui-switch style="float: right;" ng-model="useAlias"/></td>
       </tr>
     </table>
+    <div class="btn btn-default btn-primary" ng-click="saveUserData()">Save</div>
+    <div class="btn btn-default btn-primary" ng-click="logout()">Logout</div>
+    <div class="btn btn-default btn-danger" >Delete account</div>
   </div>
 </div>

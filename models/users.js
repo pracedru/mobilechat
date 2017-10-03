@@ -2,12 +2,26 @@ var fs = require('fs');
 var Guid = require('../guid');
 var bcrypt = require('bcrypt');
 
+
 Channels = null;
 usersById = null
 usersByEmail = null
 
+var RequestTypes = {
+  FriendRequest: 0,
+  JoinMyChannelRequest: 1,
+  JoinYourChannelRequest: 2
+}
+var Request = function(type, sender, target){
+  this.id = Guid.new();
+  this.timestamp = Date.now();
+  this.type = type;
+  this.sender = sender;
+  this.target = target;
+}
+
 var Ticket = function(){
-  this.timestamp = Date.now;
+  this.timestamp = Date.now();
   this.id = Guid.new();
 }
 
@@ -23,6 +37,7 @@ var User = function(name, email, password){
   this.friends = [];
   this.tickets = {};
   this.webSockets = [];
+  this.requests = {};
   this.save = function() {
     var dir = "./data/users/" + this.id;
     if (!fs.existsSync(dir)) {
@@ -54,6 +69,7 @@ var User = function(name, email, password){
      this.otherChannels = userData.otherChannels;
      this.friends = userData.friends;
      this.tickets = userData.tickets;
+     this.requests = userData.requests == null ? {} : userData.requests;
   }
   this.serialize = () =>{
     userData = {};
@@ -65,6 +81,7 @@ var User = function(name, email, password){
     userData.otherChannels = this.otherChannels;
     userData.friends = this.friends;
     userData.tickets = this.tickets;
+    userData.requests = this.requests;
     return userData;
   }
   this.authenticate = (pw) => {
@@ -194,5 +211,9 @@ module.exports = {
     }
     return result;
   },
-  User: User
+  User: User,
+  RequestTypes: RequestTypes,
+  newRequest: (type, sender, target) => {
+    return new Request(type, sender, target);
+  }
 }

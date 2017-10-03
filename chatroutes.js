@@ -29,13 +29,16 @@ module.exports = function(app) {
                   return res.end();
                 }
                 if(channel.owner==requestid){
-                  channel.users.push(targetUser.id);
-                  channel.save();
-                  targetUser.otherChannels.push(channel.id);
+                  var request = Users.newRequest(Users.RequestTypes.JoinMyChannelRequest, requestid, channelid);
+                  targetUser.requests[request.id] = request;
+                  targetUser.save();
+                  //channel.users.push(targetUser.id);
+                  //channel.save();
+                  //targetUser.otherChannels.push(channel.id);
                   res.writeHead(200, {
                     'Content-Type': 'text/html'
                   });
-                  res.write("Friend added to channel");
+                  res.write("Friend added to channel request sent.");
                   return res.end();
                 } else {
                   res.writeHead(401, {
