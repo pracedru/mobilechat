@@ -1,40 +1,30 @@
 var fs = require('fs');
 var Guid = require('./guid');
 var Users = require("./models/users.js");
+var Channels = require("./models/channels.js");
 
 module.exports = {
   createChannel: function(userID, newChannelName, publicChannel, done) {
     var newChannelID = Guid.new();
     var gf = this;
+    console.log(userID);
     var userData = Users.findById(userID, function(err, user){
       if (err)
-        done(err, null);
+        return done(err, null);
       var channelData = {
         "users": [userID],
         "owner": userID,
         "name": newChannelName,
-        "id": newChannelID,
         "public": publicChannel
       };
-      user.myChannels.push(newChannelID);
-      var dir = "./data/channels/" + newChannelID;
-      if (!fs.existsSync(dir)) {
-        fs.mkdirSync(dir);
-        fs.mkdirSync(dir + "/messages");
-      }
-      gf.saveChannelData(newChannelID, channelData);
+      var channel = new Channels(channelData);
+      channel.save();
+      user.myChannels.push(channel._id);
       user.save();
       done(err, channelData);
     });
   },
-  saveUserData: function(userID, userData) {
-    var filename = "./data/users/" + userID + "/config.json";
-    fs.writeFile(filename, JSON.stringify(userData), function(err) {
-      if (err) {
-        return console.log(err);
-      }
-    });
-  },
+
   getPublicUserData: function(userID, flat, done) {
     Users.findById(userID, function(err, user) {
       if (err)
@@ -60,17 +50,13 @@ module.exports = {
       }
     });
   },
-  getChannelData: function(channelID, flat) {
-    var filename = "./data/channels/" + channelID + "/config.json";
-    var channelData = null;
-    var data = null;
-    try {
-      data = fs.readFileSync(filename);
-    } catch (err) {
-      return null;
-    }
-    channelData = JSON.parse(data);
-    return channelData;
+  getChannelData: function(channelID, flat, done) {
+    //console.log("channelID: " + channelID);
+    channelData = Channels.findById(channelID, (err, channel)=>{
+      if (err) return done(err, null);
+      if (channel == null) return done("channel not found", null);
+      return done(null, channel);
+    });
   },
 
 
@@ -86,30 +72,5 @@ module.exports = {
         return console.log(err);
       }
     });
-  },
-  cloneUser: function(user, deep){
-    user = JSON.parse(JSON.stringify(user.serialize()));
-    if (deep){
-      user.tickets = null;
-      user.password = null;
-      for (var i = 0; i < user.myChannels.length; i++) {
-        var id = user.myChannels[i];
-        user.myChannels[i] = this.getChannelData(user.myChannels[i]);
-      }
-      for (var i = 0; i < user.otherChannels.length; i++) {
-        var id = user.otherChannels[i];
-        user.otherChannels[i] = this.getChannelData(user.otherChannels[i]);
-      }
-      for (var i = 0; i < user.friends.length; i++){
-        friendid = user.friends[i];
-        var friend = Users.findByIdSync(friendid);
-        if (friend) {
-          user.friends[i] = friend.publicData();
-        } else {
-
-        }
-      }
-    }
-    return user;
   }
 }

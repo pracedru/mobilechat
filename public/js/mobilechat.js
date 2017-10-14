@@ -85,6 +85,9 @@ app.controller('MainController', ['$location', '$http', '$scope', '$cookies', fu
   $scope.invitefriendEnabled = false;
   $scope.usersearchtext = "";
   $scope.userSearchList = [];
+  $scope.formTitle = "Accept invitation";
+  $scope.formCaption = "Hello";
+  $scope.requestObject = null;
 
   $scope.userSearch = ($event) => {
     if ($event instanceof KeyboardEvent) {
@@ -103,7 +106,7 @@ app.controller('MainController', ['$location', '$http', '$scope', '$cookies', fu
   };
 
   $scope.goChannel = function($event, channel) {
-    currentChannelID = channel.id;
+    currentChannelID = channel._id;
     $location.path("channel");
   };
   $scope.addFriend = (user) => {
@@ -111,7 +114,7 @@ app.controller('MainController', ['$location', '$http', '$scope', '$cookies', fu
       url: "addFriend",
       method: "GET",
       params: {
-        "id": user.id
+        "id": user._id
       }
     }).then(function success(response) {
       console.log(response.data);
@@ -125,7 +128,7 @@ app.controller('MainController', ['$location', '$http', '$scope', '$cookies', fu
       url: "addFriendToChannel",
       method: "GET",
       params: {
-        "friendid": user.id,
+        "friendid": user._id,
         "channelid": currentChannelID
       }
     }).then(function success(response) {
@@ -143,7 +146,7 @@ app.controller('MainController', ['$location', '$http', '$scope', '$cookies', fu
 
     if (this.newmessage != "") {
       var msgData = {
-        "userid": user.id,
+        "userid": user._id,
         "message": this.newmessage,
         "channelid": currentChannelID,
         "type": "addMessage"
@@ -176,22 +179,47 @@ app.controller('MainController', ['$location', '$http', '$scope', '$cookies', fu
     $http({
       url: "userdata",
       method: "GET",
-      params: {
-        "userid": user.id
-      }
     }).then(function success(response) {
-      //console.log(response.data);
-      var ticket = $scope.user.ticket;
       $scope.user = response.data;
       user = $scope.user;
-      user.ticket = ticket;
     }, (responce)=>{
+      //$cookies.put("ticket",null);
+      //$cookies.put("id",null);
       $location.path("login");
     });
   }
 
+  $scope.acceptRequest = function(){
+    $http({
+      url: "acceptRequest",
+      method: "GET",
+      params: {
+        "request": this.requestObject
+      }
+    }).then(function success(response) {
+      var index = $scope.user.requests.indexOf($scope.requestObject);
+      $scope.user.requests.splice(index, 1);
+    }, function (response){
+      console.log(response);
+    });
+  }
 
-  if (user == null) {
+  $scope.dismissRequest = function(request) {
+    var index = $scope.user.requests.indexOf(request);
+    //console.log("request dismissed " + index + request.sender.name);
+    $scope.user.requests.splice(index, 1);
+  }
+
+  $scope.setRequestObject = function(request){
+    $scope.requestObject = request;
+    if (request.type == 1){
+      $scope.formCaption = "Your frind " + request.sender.name + " invites you to his channel " + request.targetChannel.name;
+    } else if (request.type == 0){
+      $scope.formCaption = request.sender.name + " wants to be your friend.";
+    }
+  }
+
+  if ($cookies.get("id") == null || $cookies.get("ticket") == null ) {
     $location.path("login");
     $scope.userShown = false;
   } else {
@@ -200,8 +228,8 @@ app.controller('MainController', ['$location', '$http', '$scope', '$cookies', fu
     $scope.signupShown = false;
     $scope.updateUserData();
     try {
-      $cookies.put("id", user.id);
-      $cookies.put("ticket", user.ticket.id);
+      //console.log("id: " + user._id);
+
     } catch (e) {
     }
   }
@@ -216,7 +244,7 @@ app.controller('MainController', ['$location', '$http', '$scope', '$cookies', fu
       $scope.invitefriendEnabled = false;
       var body = document.getElementsByTagName('body')[0];
       body.classList.remove("has-extended-navbar-bottom");
-      if (user == null) {
+      if ($cookies.get("id") == null || $cookies.get("ticket") == null) {
         if (next.originalPath != "/signup") {
           $location.path("login");
         }
@@ -245,3 +273,43 @@ app.controller('MainController', ['$location', '$http', '$scope', '$cookies', fu
     }
   });
 }]);
+
+app.directive('dragToDismiss', function($drag, $parse, $timeout) {
+  return {
+    restrict: 'A',
+    compile: function(elem, attrs) {
+      var dismissFn = $parse(attrs.dragToDismiss);
+      return function(scope, elem) {
+        var dismiss = false;
+
+        $drag.bind(elem, {
+          transform: $drag.TRANSLATE_RIGHT,
+          move: function(drag) {
+            if (drag.distanceX >= drag.rect.width / 4) {
+              dismiss = true;
+              elem.addClass('dismiss');
+            } else {
+              dismiss = false;
+              elem.removeClass('dismiss');
+            }
+          },
+          cancel: function() {
+            elem.removeClass('dismiss');
+          },
+          end: function(drag) {
+            if (dismiss) {
+              elem.addClass('dismitted');
+              $timeout(function() {
+                scope.$apply(function() {
+                  dismissFn(scope);
+                });
+              }, 30);
+            } else {
+              drag.reset();
+            }
+          }
+        });
+      };
+    }
+  };
+});

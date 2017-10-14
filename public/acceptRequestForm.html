@@ -1,0 +1,21 @@
+<div class="modal" ui-if="acceptRequestForm" ui-shared-state="acceptRequestForm" >
+  <div class="modal-backdrop in"></div>
+  <div class="modal-dialog" >
+    <div class="modal-content" >
+      <div class="modal-header">
+        <button class="close"
+                ui-turn-off="acceptRequestForm">&times;</button>
+        <h4 class="modal-title"> {{ formTitle }}</h4>
+      </div>
+      <div class="modal-body">
+        {{ formCaption }}
+
+      </div>
+      <div class="modal-footer">
+        <button ui-turn-off="acceptRequestForm" class="btn btn-danger" ng-click="dismissRequest()">Dismiss</button>
+        <button ui-turn-off="acceptRequestForm" class="btn btn-default">Close</button>
+        <button ui-turn-off="acceptRequestForm" class="btn btn-primary" ng-click="acceptRequest()">Accept</button>
+      </div>
+    </div>
+  </div>
+</div>

@@ -3,7 +3,7 @@ var Guid = require('./guid');
 var Users = require("./models/users.js");
 var Channels = require("./models/channels.js");
 var gf = require("./generalFunctions.js")
-
+var Requests = require("./models/request.js");
 
 module.exports = function(app) {
   app.get("/addFriendToChannel", function(req, res) {
@@ -29,8 +29,9 @@ module.exports = function(app) {
                   return res.end();
                 }
                 if(channel.owner==requestid){
-                  var request = Users.newRequest(Users.RequestTypes.JoinMyChannelRequest, requestid, channelid);
-                  targetUser.requests[request.id] = request;
+                  var request = new Requests({type: Requests.RequestType().JoinMyChannelRequest, sender: requestid, targetChannel: channelid});
+                  request.save();
+                  targetUser.requests.push(request._id);
                   targetUser.save();
                   //channel.users.push(targetUser.id);
                   //channel.save();
@@ -73,11 +74,14 @@ module.exports = function(app) {
               throw err;
             if (targetUser){
               if(requestUser.friends.indexOf(targetUser.id) == -1){
-                targetUser.friends.push(requestUser.id);
+                var request = new Requests({type: Requests.RequestType().FriendRequest, sender: requestid, targetUser: targetid});
+                request.save();
+                targetUser.requests.push(request._id);
+                //targetUser.friends.push(requestUser.id);
                 targetUser.save();
-                requestUser.friends.push(targetUser.id);
-                requestUser.save();
-                console.log("Friends added");
+                //requestUser.friends.push(targetUser.id);
+                //requestUser.save();
+                console.log("Friend request added");
                 res.writeHead(200, {
                   'Content-Type': 'text/html'
                 });
@@ -90,8 +94,20 @@ module.exports = function(app) {
                 res.write("You are already friends.");
                 return res.end();
               }
+            } else {
+              res.writeHead(400, {
+                'Content-Type': 'text/html'
+              });
+              res.write("target user not found." + targetid);
+              return res.end();
             }
           });
+        } else {
+          res.writeHead(400, {
+            'Content-Type': 'text/html'
+          });
+          res.write("request user not found." + requestid);
+          return res.end();
         }
       });
     } else {
@@ -104,13 +120,22 @@ module.exports = function(app) {
   });
   app.get("/userSearch", function(req, res) {
     var searchText = req.query.searchText;
-    res.writeHead(200, {
-      'Content-Type': 'application/json'
-    });
+
     var resultData = {};
-    resultData.result = Users.searchByText(searchText);
-    res.write(JSON.stringify(resultData));
-    return res.end();
+    Users.searchByText(searchText, (err, users)=>{
+      if (err) {
+        res.writeHead(500, {
+          'Content-Type': 'text/html'
+        });
+        res.write("Error on server occured");
+        return res.end();
+      } else {
+        resultData.result = users;
+        res.writeHead(200, {'Content-Type': 'application/json'});
+        res.write(JSON.stringify(resultData));
+        return res.end();
+      }
+    });
   });
   app.get("/sendMessage", function(req, res) {
     var userID = req.query.userid;
@@ -123,27 +148,45 @@ module.exports = function(app) {
     return res.end();
   });
   app.get("/userdata", function(req, res) {
-    var userID = req.query.userid;
-    Users.findById(userID, function(err, user) {
+    var userID = req.cookies.id;
+    Users.findById(userID).
+        populate("myChannels").
+        populate("otherChannels").
+        populate({
+          path: "requests",
+          populate: [
+            {
+              path: "sender",
+              select: "name"
+            },
+            {
+              path: "targetChannel",
+              select: "name"
+            }
+          ]
+        }).
+        populate("friends").exec( (err, user) => {
       if (err) {
         res.writeHead(500, {
           'Content-Type': 'text/html'
         });
         res.write("Error on server occured");
         return res.end();
+      } else if(user==null) {
+        res.writeHead(400, {
+          'Content-Type': 'text/html'
+        });
+        res.write("User not found " + userID);
+        return res.end();
       } else {
-        var ticket = req.cookies.ticket;
-        if (user.checkTicket(ticket)){
-          user = gf.cloneUser(user, true);
-          res.writeHead(200, {
-            'Content-Type': 'application/json'
-          });
+        var ticketGUID = req.cookies.ticket;
+        if (user.checkTicket(ticketGUID)){
+          res.writeHead(200, {'Content-Type': 'application/json'});
           res.write(JSON.stringify(user));
           return res.end();
+
         } else {
-          res.writeHead(401, {
-            'Content-Type': 'html/text'
-          });
+          res.writeHead(401, {'Content-Type': 'html/text'});
           res.write("Permision denied");
           return res.end();
         }
@@ -153,28 +196,30 @@ module.exports = function(app) {
   app.get("/channelData", function(req, res) {
     var userID = req.query.userid;
     var channelID = req.query.channelid;
-    var channelData = gf.getChannelData(channelID, false);
-    if (channelData != null) {
-      res.writeHead(200, {
-        'Content-Type': 'application/json'
-      });
-      res.write(JSON.stringify(channelData));
-      return res.end();
-    } else {
-      res.writeHead(500, {
-        'Content-Type': 'text/html'
-      });
-      res.write("Error on server occured");
-      return res.end();
-    }
+    var channelData = gf.getChannelData(channelID, false, (err, channelData) => {
+      if (channelData != null) {
+        res.writeHead(200, {
+          'Content-Type': 'application/json'
+        });
+        res.write(JSON.stringify(channelData));
+        return res.end();
+      } else {
+        res.writeHead(500, {
+          'Content-Type': 'text/html'
+        });
+        res.write("Error on server occured: " + err);
+        return res.end();
+      }
+    });
   });
   app.get("/channelMessages", function(req, res) {
     var userID = req.query.userid;
     var channelID = req.query.channelid;
     var timeStamp = req.query.timeStamp;
     var maxCount = req.query.maxCount;
+    //console.log("channelid: " + channelID);
     Channels.findById(channelID, (err, channel) => {
-      if (err) {
+      if (err || channel==null) {
         console.log("channel not found");
         res.writeHead(500, {
           'Content-Type': 'text/html'
@@ -182,16 +227,36 @@ module.exports = function(app) {
         res.write("Error on server occured: " + err);
         return res.end();
       }
-      var channelMessages = channel.getMessages(userID, maxCount, timeStamp);
-      res.writeHead(200, {
-        'Content-Type': 'application/json'
+
+      var channelMessages = channel.getMessages(userID, maxCount, timeStamp, (err, messages)=>{
+        if(err){
+          console.log("Error");
+          res.writeHead(500, {
+            'Content-Type': 'text/html'
+          });
+          return res.end();
+        } else if(messages==null){
+          console.log("Error");
+          res.writeHead(500, {
+            'Content-Type': 'text/html'
+          });
+          return res.end();
+        } else {
+          messagesData = {
+            "timeStamp": Date.now(),
+            "channelMessages": messages
+          };
+          res.writeHead(200, {
+            'Content-Type': 'application/json'
+          });
+          res.write(JSON.stringify(messagesData));
+          return res.end();
+        }
       });
-      res.write(JSON.stringify(channelMessages));
-      return res.end();
     });
   });
   app.get("/createChannel", function(req, res) {
-    var userID = req.query.userid;
+    var userID = req.cookies.id;
     var newChannelName = req.query.name;
     var publicChannel = req.query.public;
     gf.createChannel(userID, newChannelName, publicChannel, function(err, channelData) {
@@ -206,6 +271,100 @@ module.exports = function(app) {
       });
       res.write(JSON.stringify(channelData));
       return res.end();
+    });
+  });
+  app.get("/acceptRequest", function(req, res) {
+    var userID = req.cookies.id;
+    var requestdata = JSON.parse(req.query.request);
+    //console.log(req.query.request);
+    Users.findById(userID, (err, user) => {
+      if (err) {
+        res.writeHead(500, {
+          'Content-Type': 'text/html'
+        });
+        res.write("Error on server occured: " + err);
+        return res.end();
+      } else if (user == null){
+        res.writeHead(400, {
+          'Content-Type': 'text/html'
+        });
+        res.write("User not found: " + userID);
+        return res.end();
+      } else {
+        Requests.findById(requestdata._id, (err, request) => {
+          if (err) {
+            res.writeHead(500, {
+              'Content-Type': 'text/html'
+            });
+            res.write("Error on server occured: " + err);
+            return res.end();
+          } else if(request==null) {
+            res.writeHead(400, {
+              'Content-Type': 'text/html'
+            });
+            res.write("Request not found: " + requestdata._id);
+            return res.end();
+          } else {
+            if (request.type == Requests.RequestType().JoinMyChannelRequest){
+              Channels.findById(request.targetChannel, (err, channel) => {
+                if (err) {
+                  res.writeHead(500, {
+                    'Content-Type': 'text/html'
+                  });
+                  res.write("Error on server occured: " + err);
+                  return res.end();
+                } else if(request==null) {
+                  res.writeHead(400, {
+                    'Content-Type': 'text/html'
+                  });
+                  res.write("Channel not found: " + request.targetChannel);
+                  return res.end();
+                } else {
+                  channel.users.push(user._id);
+                  channel.save();
+                  var index = user.requests.indexOf(request._id);
+                  user.requests.splice(index, 1);
+                  user.otherChannels.push(channel._id);
+                  user.save();
+                  res.writeHead(200, {
+                    'Content-Type': 'text/html'
+                  });
+                  res.write("Success");
+                  return res.end();
+                }
+              });
+            } else if (request.type == Requests.RequestType().FriendRequest){
+              Users.findById(request.sender, (err, senderUser) => {
+                if (err) {
+                  res.writeHead(500, {
+                    'Content-Type': 'text/html'
+                  });
+                  res.write("Error on server occured: " + err);
+                  return res.end();
+                } else if(senderUser==null) {
+                  res.writeHead(400, {
+                    'Content-Type': 'text/html'
+                  });
+                  res.write("User not found: " + request.sender);
+                  return res.end();
+                } else {
+                  senderUser.friends.push(user._id);
+                  senderUser.save();
+                  var index = user.requests.indexOf(request._id);
+                  user.requests.splice(index, 1);
+                  user.friends.push(senderUser._id);
+                  user.save();
+                  res.writeHead(200, {
+                    'Content-Type': 'text/html'
+                  });
+                  res.write("Success");
+                  return res.end();
+                }
+              });
+            }
+          }
+        });
+      }
     });
   });
 };

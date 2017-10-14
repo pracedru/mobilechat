@@ -16,11 +16,9 @@ app.controller('UserController', ['$location', '$http', '$scope', '$cookies', fu
       }
     }).then(function success(response) {
       console.log("Success");
-      console.log(response);
-      user = response.data;
-      localStorage.setItem('user', JSON.stringify(user));
-      $cookies.put("id", user.id);
-      $cookies.put("ticket", user.ticket.id);
+      console.log(response.data);
+      $cookies.put("id", response.data.id);
+      $cookies.put("ticket", response.data.ticket.guid);
       $location.path("");
     }, function error(response) {
       console.log("Error");
@@ -39,12 +37,11 @@ app.controller('UserController', ['$location', '$http', '$scope', '$cookies', fu
         "password": this.password
       }
     }).then(function success(response) {
-      //console.log("Success");
-      //console.log(response);
-      user = response.data;
-      localStorage.setItem('user', JSON.stringify(user));
-      $cookies.put("id", user.id);
-      $cookies.put("ticket", user.ticket.id);
+      console.log("Success");
+      console.log(response.data);
+      $cookies.put("id", response.data.id);
+      $cookies.put("ticket", response.data.ticket.guid);
+      console.log("id: " + $cookies.get("id"));
       $location.path("");
     }, function error(response) {
       console.log("Error");

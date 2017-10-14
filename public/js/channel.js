@@ -1,22 +1,30 @@
-app.controller('ChannelController', ['$location', '$http', '$scope', '$websocket', function($location, $http, $scope, $websocket) {
+app.controller('ChannelController', ['$location', '$http', '$scope', '$websocket', '$cookies', function($location, $http, $scope, $websocket, $cookies) {
   ws = $websocket("ws://" + location.host);
   ws.onError( (e) => {
     console.log("ws error");
   });
   ws.onOpen(function(){
     var authenticateRequest = {
-      'user': user,
-      'type': "authenticateRequest"
+      'userid': $cookies.get("id"),
+      'ticketguid': $cookies.get("ticket"),
+      'type': "authenticateRequest",
+      'channelID': currentChannelID
     }
     this.send(JSON.stringify(authenticateRequest));
   });
   ws.onMessage (function(msg){
+    //console.log(msg.data);
     var messageData = JSON.parse(msg.data);
     switch (messageData.type)
     {
       case "messageRelay":
         //console.log("Pushing message");
-        $scope.channelMessages.push({name: messageData.name, text: messageData.message, timeStamp: messageData.timestamp});
+        var data = {
+          sender : { name: messageData.name },
+          text: messageData.message,
+          timeStamp: messageData.timestamp
+        }
+        $scope.channelMessages.push(data);
         $location.hash('msg' + messageData.timestamp);
         break;
     }
@@ -33,7 +41,7 @@ app.controller('ChannelController', ['$location', '$http', '$scope', '$websocket
 
   $scope.gotoBottom = function() {
     if ($scope.channelMessages.length > 0){
-      var timeStamp = $scope.channelMessages[$scope.channelMessages.length - 1].timeStamp;
+      var timeStamp = $scope.channelMessages[$scope.channelMessages.length - 1].timestamp;
       $location.hash('msg' + timeStamp);
     }
   }
@@ -63,7 +71,7 @@ app.controller('ChannelController', ['$location', '$http', '$scope', '$websocket
   }).then(function success(response) {
     //console.log(response.data);
     $scope.channelMessages = response.data.channelMessages;
-    $scope.channel.timeStamp = response.data.timeStamp;
+    $scope.channel.timeStamp = response.data.timestamp;
     $scope.gotoBottom();
   }, (response) => {
     console.log(response.data);
@@ -84,3 +92,5 @@ app.controller('ChannelController', ['$location', '$http', '$scope', '$websocket
     }
   });
 }]);
+
+

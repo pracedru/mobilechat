@@ -8,9 +8,9 @@
   <div class="scrollable">
     <div class="scrollable-content">
       <div class="list-group" ui-turn-off="uiSidebarLeft" >
-        <div id="msg{{message.timeStamp}}" class="list-group-item" ng-repeat="message in channelMessages">
+        <div id="msg{{message.timestamp}}" class="list-group-item" ng-repeat="message in channelMessages">
           <small>
-            <span class="label label-default" >{{message.name}}</span>
+            <span class="label label-default" >{{message.sender.name}}</span>
           </small>
 
           <div class="md-body-2">{{message.text}}</div>

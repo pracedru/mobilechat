@@ -1,6 +1,98 @@
-var fs = require('fs');
-var Guid = require('../guid');
+var mongoose = require('mongoose'),
+    Schema = mongoose.Schema,
+    ObjectId = Schema.ObjectId;
+var Messages = require('./messages.js');
 
+var ChannelSchema = Schema({
+  name: String,
+  owner: {type: ObjectId, ref: 'User'},
+  users: [{type: ObjectId, ref: 'User'}],
+  public: Boolean,
+  messages: [{type: ObjectId, ref: 'Message'}]
+});
+
+ChannelSchema.methods.getMessages = function (userID, maxCount, timeStamp, done){
+  Messages.find({"_id":{ $in: this.messages}})
+      .populate({path: "sender", select: "name"})
+      .exec((err, messages) => {
+    if (err) return done(err, null);
+    return done(null, messages);
+  });
+}
+
+ChannelSchema.methods.addMessage = function (dataObject){
+  mongoose.model('User').findById(dataObject.userid, (err, user) => {
+    var message = new Messages({
+      text: dataObject.message,
+      timestamp: Date.now(),
+      sender: user._id
+    });
+    message.save();
+    this.messages.push(message._id);
+    this.save();
+    relayMessage(dataObject, user);
+  });
+}
+
+ChannelSchema.methods.addWebSocket = function (ws){
+  var uwsh = new ChannelWebSocketHandler(this, ws);
+  var channelWebSocketHandlers = null;
+  if (!(this._id in channelsWebSocketHandlers)){
+    channelWebSocketHandlers = [];
+    channelsWebSocketHandlers[this._id] = channelWebSocketHandlers;
+  } else {
+    channelWebSocketHandlers = channelsWebSocketHandlers[this._id];
+  }
+  channelWebSocketHandlers.push(uwsh);
+}
+
+
+mongoose.model('Channel', ChannelSchema);
+
+module.exports = mongoose.model('Channel');
+
+var channelsWebSocketHandlers = {};
+
+var ChannelWebSocketHandler = function (channel, ws){
+  this.channel = channel;
+  this.ws = ws;
+  self = this;
+  this.onMessage = function(data){
+    //console.log(data);
+    var dataObject = JSON.parse(data);
+    switch (dataObject.type) {
+      case "addMessage":
+        self.channel.addMessage(dataObject);
+        break;
+      default:
+        console.log("wierd message recieved! " + data);
+    }
+  }
+  ws.on("message", this.onMessage);
+  ws.on("close", () => {
+    //console.log("websocket closed");
+    var index = channelsWebSocketHandlers[self.channel._id].indexOf(this);
+    //console.log("index: " + index);
+    channelsWebSocketHandlers[this.channel._id].splice(index, 1);
+  });
+}
+
+
+var relayMessage = function(messageData, user){
+  msg = {
+    type: "messageRelay",
+    message: messageData.message,
+    name: user.name,
+    timestamp: Date.now()
+  };
+  var wshCount = channelsWebSocketHandlers[messageData.channelid].length;
+  for (var i = 0; i < wshCount; i++){
+    var wsh = channelsWebSocketHandlers[messageData.channelid][i];
+    wsh.ws.send(JSON.stringify(msg));
+  }
+}
+
+/*
 var Users = null;
 var channelsByID = {};
 
@@ -147,3 +239,4 @@ module.exports = {
     }
   }
 }
+*/
