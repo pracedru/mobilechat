@@ -10,7 +10,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "bcrypt": "^1.0.3",
+    "bcrypt": "*",
     "bcryptjs": "*",
     "body-parser": "*",
     "cookie-parser": "*",
@@ -18,7 +18,7 @@
     "express-validation": "*",
     "guid": "*",
     "jsonwebtoken": "*",
-    "mongoose": "^4.11.13",
-    "ws": "^3.2.0"
+    "mongoose": "*",
+    "ws": "*"
   }
 }
